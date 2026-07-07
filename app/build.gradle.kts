@@ -17,19 +17,32 @@ android {
     applicationId = "com.zhaw.lucientness"
     minSdk = 24
     targetSdk = 36
-    versionCode = 1
-    versionName = "1.0"
+    versionCode = 2
+    versionName = "1.2"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 
   signingConfigs {
     create("release") {
-      val keystorePath = System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks"
-      storeFile = file(keystorePath)
-      storePassword = System.getenv("STORE_PASSWORD")
-      keyAlias = "upload"
-      keyPassword = System.getenv("KEY_PASSWORD")
+      // Prefer a real upload keystore if the CI / local environment provides one
+      // via env vars (KEYSTORE_PATH / STORE_PASSWORD / KEY_PASSWORD). Otherwise
+      // fall back to the debug keystore so `assembleRelease` still produces a
+      // signed, installable APK instead of failing. The debug keystore is
+      // checked-in as debug.keystore (decoded from debug.keystore.base64 by CI),
+      // which keeps the v1.1.x signing identity stable.
+      val keystorePath = System.getenv("KEYSTORE_PATH")
+      if (keystorePath != null) {
+        storeFile = file(keystorePath)
+        storePassword = System.getenv("STORE_PASSWORD")
+        keyAlias = System.getenv("KEY_ALIAS") ?: "upload"
+        keyPassword = System.getenv("KEY_PASSWORD")
+      } else {
+        storeFile = file("${rootDir}/debug.keystore")
+        storePassword = "android"
+        keyAlias = "androiddebugkey"
+        keyPassword = "android"
+      }
     }
     create("debugConfig") {
       storeFile = file("${rootDir}/debug.keystore")
@@ -42,9 +55,20 @@ android {
   buildTypes {
     release {
       isCrunchPngs = false
-      isMinifyEnabled = false
-      isShrinkResources = false
-      proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+      // Enable R8 code shrinking + resource shrinking. This is what actually
+      // strips kotlinx-coroutines-debug's DebugProbesKt.bin, Compose tooling,
+      // and other debug-only artifacts out of the shipped APK. Without these
+      // two flags the release APK still ships every transitive dependency
+      // (which is exactly why v1.1.x ended up at 22 MB with DebugProbesKt.bin
+      // inside it).
+      isMinifyEnabled = true
+      isShrinkResources = true
+      // Release must not be debuggable. Explicit so future edits don't regress.
+      isDebuggable = false
+      proguardFiles(
+        getDefaultProguardFile("proguard-android-optimize.txt"),
+        "proguard-rules.pro"
+      )
       signingConfig = signingConfigs.getByName("release")
     }
     debug {
@@ -62,6 +86,24 @@ android {
     buildConfig = true
   }
   testOptions { unitTests { isIncludeAndroidResources = true } }
+  // Drop debug-only packages from the release packaging entirely. Even with
+  // R8 minify enabled this guarantees those artifacts never end up in the APK,
+  // no matter what transitive deps pull them in.
+  packaging {
+    resources {
+      excludes += setOf(
+        "/DebugProbesKt.bin",
+        "META-INF/{AL2.0,LGPL2.1}",
+        "META-INF/DEPENDENCIES",
+        "META-INF/LICENSE*",
+        "META-INF/NOTICE*",
+        "META-INF/INDEX.LIST",
+        "META-INF/io.netty.versions.properties",
+        "**/attach_hotspot_windows.dll",
+        "META-INF/*.version"
+      )
+    }
+  }
 }
 
 // Configure the Secrets Gradle Plugin to use .env and .env.example files
@@ -107,6 +149,9 @@ dependencies {
   implementation(libs.firebase.appcheck.recaptcha)
   implementation(libs.kotlinx.coroutines.android)
   implementation(libs.kotlinx.coroutines.core)
+  // OkHttp logging interceptor is intentionally an `implementation` so it can
+  // be guarded at runtime; no HttpLoggingInterceptor is ever added to the
+  // OkHttpClient in OpenAiClient, so the cost is zero in release builds.
   implementation(libs.logging.interceptor)
   implementation(libs.moshi.kotlin)
   implementation(libs.okhttp)

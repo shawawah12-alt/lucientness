@@ -1,21 +1,133 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# ============================================================================
+# Lucientness ProGuard / R8 rules
+# ----------------------------------------------------------------------------
+# These rules keep the runtime-reflection-based parts of the dependency graph
+# intact while letting R8 strip everything else (kotlinx-coroutines-debug,
+# Compose tooling, unused Material icons, etc.) out of the release APK.
+# ============================================================================
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# --- Keep line numbers in stack traces for crash reports --------------------
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile
+-keepattributes InnerClasses
+-keepattributes Signature
+-keepattributes Exceptions
+-keepattributes EnclosingMethod
+-keepattributes RuntimeVisibleAnnotations
+-keepattributes RuntimeInvisibleAnnotations
+-keepattributes RuntimeVisibleParameterAnnotations
+-keepattributes RuntimeInvisibleParameterAnnotations
+-keepattributes AnnotationDefault
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# --- Kotlin metadata --------------------------------------------------------
+-keep class kotlin.Metadata { *; }
+-keepclassmembers class **$WhenMappings {
+    <fields>;
+}
+-keepclassmembers class kotlin.Metadata { *; }
+-dontwarn kotlin.**
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# --- Moshi (codegen + reflection adapters) ---------------------------------
+# Moshi generates adapters via KSP, but generic types and @JsonClass(generateAdapter=false)
+# types still rely on reflection. Keep the @JsonClass marker and generated adapters.
+-keep @com.squareup.moshi.JsonClass class * { *; }
+-keep class **JsonAdapter { <init>(...); *; }
+-keepclassmembers class * {
+    @com.squareup.moshi.Json <fields>;
+}
+-keep class com.example.network.** { *; }
+-keep class com.example.models.** { *; }
+-dontwarn org.jetbrains.annotations.**
+
+# --- Retrofit ---------------------------------------------------------------
+# Retrofit uses reflection to parse method annotations and create service
+# interfaces at runtime. Without these rules the generated service impl throws
+# NullPointerException on first call.
+-keepattributes RuntimeVisibleAnnotations,RuntimeVisibleParameterAnnotations
+-keepclassmembers,allowshrinking,allowobfuscation interface * {
+    @retrofit2.http.* <methods>;
+}
+-keep,allowobfuscation,allowshrinking interface retrofit2.Call
+-keep,allowobfuscation,allowshrinking class retrofit2.Response
+-keep,allowobfuscation,allowshrinking class kotlin.coroutines.Continuation
+# Retain generic type info for return types (e.g. Call<MyResponse>).
+-keep,allowobfuscation,allowshrinking class retrofit2.KotlinExtensions
+-keep,allowobfuscation,allowshrinking class retrofit2.KotlinExtensions$*
+-if interface * { @retrofit2.http.* <methods>; }
+-keep,allowobfuscation interface <1>
+-dontwarn retrofit2.**
+-keep class retrofit2.** { *; }
+
+# --- OkHttp / Okio ----------------------------------------------------------
+# OkHttp uses reflection to build the platform-specific ConnectionSpec and to
+# locate the platform TLS stack. Okio uses reflection for ByteString and
+# Buffer subclasses.
+-dontwarn okhttp3.internal.platform.**
+-dontwarn org.conscrypt.**
+-dontwarn org.bouncycastle.**
+-dontwarn org.openjsse.**
+-keep names class okhttp3.internal.publicsuffix.PublicSuffixDatabase
+-keep class okhttp3.** { *; }
+-keep class okio.** { *; }
+
+# --- Room -------------------------------------------------------------------
+# Room generates DAO implementations at compile time, but the database builder
+# looks up the impl class by reflection. Keep the @Database class and the
+# generated *_Impl class together.
+-keep class * extends androidx.room.RoomDatabase { <init>(); }
+-keep @androidx.room.Entity class * { *; }
+-keep @androidx.room.Dao class * { *; }
+-dontwarn androidx.room.paging.**
+
+# --- Jetpack Compose --------------------------------------------------------
+# Compose is mostly fine under R8, but the runtime needs the Composable
+# lambdas and the Modifier classes to remain invokable through reflection.
+-dontwarn androidx.compose.**
+-keep class androidx.compose.runtime.** { *; }
+-keep class androidx.compose.ui.** { *; }
+# Keep the live-literal / composable-callable classes generated by the
+# compose compiler.
+-keep class **$Composable* { *; }
+
+# --- Material3 (ModalNavigationDrawer etc.) --------------------------------
+-dontwarn androidx.compose.material3.**
+-keep class androidx.compose.material3.** { *; }
+
+# --- AndroidX ViewModel -----------------------------------------------------
+-keep class * extends androidx.lifecycle.ViewModel { <init>(...); }
+-keep class androidx.lifecycle.ViewModelProvider$Factory { *; }
+-keep class * implements androidx.lifecycle.ViewModelProvider$Factory { <init>(...); }
+
+# --- WebView / JavaScript interface ----------------------------------------
+# The app does not currently expose a JS interface, but keep the rule in
+# place so a future @JavascriptInterface-annotated class is not stripped.
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
+-keep class android.webkit.WebView { *; }
+-keep class android.webkit.WebViewClient { *; }
+
+# --- Coroutines -------------------------------------------------------------
+# Strip the debug-only DebugProbes artifact from release builds. This is the
+# file that produced `DebugProbesKt.bin` inside the v1.1.x APK.
+-assume-no-side-effects class kotlinx.coroutines.debug.DebugProbes { *; }
+-dontwarn kotlinx.coroutines.debug.**
+-keep class kotlinx.coroutines.android.AndroidExceptionPreHandler { *; }
+
+# --- Firebase ---------------------------------------------------------------
+-dontwarn com.google.firebase.**
+-keep class com.google.firebase.** { *; }
+-keep class com.google.android.gms.** { *; }
+# Keep the BuildConfig generated by the Gradle plugin so Firebase can read
+# its app id at runtime.
+-keep class com.zhaw.lucientness.BuildConfig { *; }
+
+# --- App's own classes ------------------------------------------------------
+-keep class com.example.MainActivity { *; }
+-keep class com.example.** { *; }
+
+# --- Misc -------------------------------------------------------------------
+# Don't warn about missing optional classes from javax / kotlin.reflect etc.
+-dontwarn javax.lang.model.**
+-dontwarn kotlin.reflect.**
+-dontwarn java.lang.invoke.StringConcatFactory

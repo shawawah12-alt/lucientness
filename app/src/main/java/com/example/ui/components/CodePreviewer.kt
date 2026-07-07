@@ -1,14 +1,30 @@
 package com.example.ui.components
 
+import android.annotation.SuppressLint
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.ui.viewinterop.AndroidView
 
+/**
+ * Code preview rendered inside a WebView.
+ *
+ * IMPORTANT (fix v1.2.0):
+ * The previous implementation wrapped the AndroidView with:
+ *     .pointerInput(Unit) { detectTransformGestures { _, _, _, _ -> } }
+ * That detector only reliably consumes *multi-touch* transforms (pinch / rotate).
+ * A single-pointer horizontal swipe was NOT consumed, so the touch event bubbled
+ * up to the parent [androidx.compose.material3.ModalNavigationDrawer], which
+ * interpreted it as an "open drawer" edge gesture. The empty lambda also stole
+ * touch events from the WebView, which is why the preview only moved a tiny bit
+ * when the user tried to scroll it horizontally.
+ *
+ * Fix: drop the broken pointerInput entirely so the WebView owns its touch
+ * stream, and disable the drawer's swipe gesture while preview mode is active
+ * (handled in MainScreen via `gesturesEnabled = !isPreviewMode`).
+ */
 @Composable
 fun CodePreviewer(
     code: String,
@@ -16,11 +32,20 @@ fun CodePreviewer(
     modifier: Modifier = Modifier
 ) {
     AndroidView(
-        modifier = modifier.fillMaxSize().pointerInput(Unit) { detectTransformGestures { _, _, _, _ -> } },
+        modifier = modifier.fillMaxSize(),
         factory = { context ->
             WebView(context).apply {
+                @SuppressLint("SetJavaScriptEnabled")
                 settings.javaScriptEnabled = true
                 settings.domStorageEnabled = true
+                // Make the WebView scrollable in both directions inside the
+                // preview pane so the user can pan around the rendered HTML.
+                settings.loadWithOverviewMode = true
+                settings.useWideViewPort = true
+                settings.builtInZoomControls = false
+                settings.displayZoomControls = false
+                isVerticalScrollBarEnabled = true
+                isHorizontalScrollBarEnabled = true
                 webViewClient = WebViewClient()
             }
         },

@@ -94,8 +94,13 @@ fun MainScreen(viewModel: EditorViewModel) {
         uri?.let { viewModel.importFile(it) }
     }
 
+    // Disable the drawer's edge-swipe gesture while the HTML preview is on
+    // screen. Otherwise a horizontal swipe inside the WebView (e.g. panning
+    // the rendered page) leaks up to ModalNavigationDrawer and pops the left
+    // sidebar open. The hamburger button still opens the drawer normally.
     ModalNavigationDrawer(
         drawerState = drawerState,
+        gesturesEnabled = !isPreviewMode,
         drawerContent = {
             ModalDrawerSheet(
                 drawerContainerColor = DarkSurface,
