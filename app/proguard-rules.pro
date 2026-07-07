@@ -108,9 +108,9 @@
 -keep class android.webkit.WebViewClient { *; }
 
 # --- Coroutines -------------------------------------------------------------
-# Strip the debug-only DebugProbes artifact from release builds. This is the
-# file that produced `DebugProbesKt.bin` inside the v1.1.x APK.
--assume-no-side-effects class kotlinx.coroutines.debug.DebugProbes { *; }
+# DebugProbesKt.bin is stripped from the APK via `packaging.resources.excludes`
+# in build.gradle.kts. Here we just silence warnings about the debug-only
+# coroutine classes that R8 cannot find on the release classpath.
 -dontwarn kotlinx.coroutines.debug.**
 -keep class kotlinx.coroutines.android.AndroidExceptionPreHandler { *; }
 
