@@ -62,3 +62,70 @@ Proyek ini didistribusikan di bawah lisensi MIT. Silakan periksa file LICENSE un
 - Zhaw (Shadiq)
 - Tiktok: [ravmoise](https://www.tiktok.com/@ravmoise?_r=1&_t=ZS-97pa7mwQZzk)
 - Instagram: [mas_ukkantext](https://www.instagram.com/mas_ukkantext?igsh=MXNqeW4xYzg0NGR0aA==)
+
+---
+
+# Lucientness (English)
+
+Lucientness is an Android code editor built around a dark-fantasy themed interface. The app follows a minimalist, boxy design language and avoids visual clutter, with the goal of providing a clean, focused coding experience backed by an AI coding assistant.
+
+## Table of Contents
+- [Key Features](#key-features)
+- [Installation](#installation)
+- [AI Assistant Configuration](#ai-assistant-configuration)
+- [Contributing](#contributing-1)
+- [License](#license-1)
+- [Developer Information](#developer-information-1)
+
+## Key Features
+
+- **Multi-Language Support**: The editor supports a wide range of programming and markup languages, including HTML, CSS, JavaScript, TypeScript, XML, Markdown, Python, Java, C, Ruby, Perl, Scala, and PHP.
+- **Live Preview**: Instant preview is available for HTML, CSS, JavaScript, and Markdown files directly inside the app.
+- **Integrated AI Assistant**: A smart assistant that understands the context of the file currently being edited. It supports custom OpenAI-compatible endpoints, so users can plug in any language model of their choice.
+- **Local File Management**: Users can create, delete, and manage files and directories directly through the in-app navigation drawer.
+
+## Installation
+
+To build this app from source, make sure you have Android Studio and a recent Android SDK installed.
+
+1. Clone this repository:
+   git clone https://github.com/shawawah12-alt/lucientness.git
+
+2. Open the project in Android Studio.
+
+3. Wait for Gradle sync to finish.
+
+4. Run the app on an emulator or a physical Android device.
+
+Alternatively, download the latest release APK from the [Releases page](https://github.com/shawawah12-alt/lucientness/releases) and install it directly.
+
+## AI Assistant Configuration
+
+Lucientness gives you full freedom over the AI assistant. By default, the app requires manual configuration before the assistant can be used.
+
+1. Open the app and tap the star icon in the top bar to open the AI assistant.
+2. Enter an Endpoint URL that is OpenAI-compatible.
+3. Enter a valid API Key.
+4. Specify the model name you want to use.
+5. Save the settings and the assistant is ready to help you write code.
+
+## Contributing
+
+This project is open-source. Developers are welcome to contribute, whether by fixing bugs, improving performance, or adding new features.
+
+Steps to contribute:
+1. Fork this repository.
+2. Create a new feature branch (`git checkout -b feature-name`).
+3. Commit your changes (`git commit -m 'Add new feature'`).
+4. Push to the branch (`git push origin feature-name`).
+5. Open a Pull Request.
+
+## License
+
+This project is distributed under the MIT License. See the `LICENSE` file for more details.
+
+## Developer Information
+
+- Zhaw (Shadiq)
+- Tiktok: [ravmoise](https://www.tiktok.com/@ravmoise?_r=1&_t=ZS-97pa7mwQZzk)
+- Instagram: [mas_ukkantext](https://www.instagram.com/mas_ukkantext?igsh=MXNqeW4xYzg0NGR0aA==)

@@ -77,9 +77,9 @@ fun AiAssistantBottomSheet(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         if (isLoading) {
-                            Text("Sedang berpikir...", color = AccentRed, style = Typography.bodyMedium)
+                            Text("Thinking...", color = AccentRed, style = Typography.bodyMedium)
                         } else {
-                            Text(aiResponse.ifEmpty { "Halo, ada yang bisa saya bantu dengan kode di file ini?" }, color = TextPrimary, style = Typography.bodyMedium)
+                            Text(aiResponse.ifEmpty { "Hi, is there anything I can help you with in this file's code?" }, color = TextPrimary, style = Typography.bodyMedium)
                         }
                     }
                 }
@@ -92,7 +92,7 @@ fun AiAssistantBottomSheet(
                     value = prompt,
                     onValueChange = { prompt = it },
                     modifier = Modifier.weight(1f),
-                    placeholder = { Text("Tanyakan tentang kode...", color = TextSecondary) },
+                    placeholder = { Text("Ask about the code...", color = TextSecondary) },
                     textStyle = Typography.bodyMedium.copy(color = TextPrimary),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = AccentRed,
@@ -109,7 +109,7 @@ fun AiAssistantBottomSheet(
                         }
                     }
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Kirim", tint = AccentRed)
+                    Icon(Icons.AutoMirrored.Filled.Send, contentDescription = "Send", tint = AccentRed)
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))

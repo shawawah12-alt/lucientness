@@ -110,12 +110,12 @@ class EditorViewModel(
             _aiResponse.value = "Thinking..."
             
             val systemPrompt = """
-                Kamu adalah Lucientness AI, asisten koding cerdas. 
-                Gunakan bahasa Indonesia.
-                Jawab pertanyaan pengguna mengenai file yang sedang dibuka dengan tepat dan singkat.
-                
-                File saat ini: ${_currentFile.value?.name ?: "Tidak ada file"}
-                Isi file:
+                You are Lucientness AI, a smart coding assistant.
+                Use English.
+                Answer the user's questions about the currently open file accurately and concisely.
+
+                Current file: ${_currentFile.value?.name ?: "No file open"}
+                File contents:
                 ${_fileContent.value.text}
             """.trimIndent()
 

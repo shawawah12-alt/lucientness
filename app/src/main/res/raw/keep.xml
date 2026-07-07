@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Resource shrinker keep list.
+
+  When `isShrinkResources = true` is enabled in build.gradle.kts, R8's
+  resource shrinker performs static reachability analysis on resource
+  references. The launcher icon referenced from AndroidManifest.xml
+  (`@mipmap/ic_launcher`, `@mipmap/ic_launcher_round`) is normally kept
+  automatically, but in v1.2.0 the shrinker still stripped every
+  `res/mipmap-*/ic_launcher*.webp` file from the release APK — the result
+  was an APK with no launcher icon at all.
+
+  This file explicitly tells the shrinker to keep the launcher icon set
+  and the adaptive-icon XML references, so the icon survives the release
+  build. See:
+    https://developer.android.com/build/shrink-code#keep-resources
+-->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@mipmap/ic_launcher,@mipmap/ic_launcher_round,@drawable/ic_launcher_background,@drawable/ic_launcher_foreground,@drawable/app_icon,@mipmap/ic_launcher.xml,@mipmap/ic_launcher_round.xml" />

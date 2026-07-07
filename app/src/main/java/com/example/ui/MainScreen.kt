@@ -144,17 +144,17 @@ fun MainScreen(viewModel: EditorViewModel) {
                                             targetFolderForNew = file
                                             showNewFileDialog = true 
                                         }) {
-                                            Icon(Icons.Default.Add, contentDescription = "Tambah File", tint = TextSecondary)
+                                            Icon(Icons.Default.Add, contentDescription = "Add File", tint = TextSecondary)
                                         }
                                         IconButton(onClick = { 
                                             targetFolderForNew = file
                                             showNewFolderDialog = true 
                                         }) {
-                                            Icon(Icons.Default.CreateNewFolder, contentDescription = "Tambah Folder", tint = TextSecondary)
+                                            Icon(Icons.Default.CreateNewFolder, contentDescription = "Add Folder", tint = TextSecondary)
                                         }
                                     }
                                     IconButton(onClick = { viewModel.deleteFile(file) }) {
-                                    Icon(Icons.Default.Delete, contentDescription = "Hapus", tint = TextSecondary)
+                                    Icon(Icons.Default.Delete, contentDescription = "Delete", tint = TextSecondary)
                                 }
                             }
                         }
@@ -171,7 +171,7 @@ fun MainScreen(viewModel: EditorViewModel) {
                             modifier = Modifier.weight(1f),
                             contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp)
                         ) {
-                            Icon(Icons.Default.Add, contentDescription = "File Baru")
+                            Icon(Icons.Default.Add, contentDescription = "New File")
                             Spacer(modifier = Modifier.width(4.dp))
                             Text("File", maxLines = 1, style = Typography.bodySmall)
                         }
@@ -186,7 +186,7 @@ fun MainScreen(viewModel: EditorViewModel) {
                             modifier = Modifier.weight(1f),
                             contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 4.dp)
                         ) {
-                            Icon(Icons.Default.Add, contentDescription = "Folder Baru")
+                            Icon(Icons.Default.Add, contentDescription = "New Folder")
                             Spacer(modifier = Modifier.width(4.dp))
                             Text("Folder", maxLines = 1, style = Typography.bodySmall)
                         }
@@ -209,9 +209,9 @@ fun MainScreen(viewModel: EditorViewModel) {
                             onClick = { 
                                 val path = viewModel.exportCurrentFile()
                                 if (path != null) {
-                                    exportMessage = "Diekspor ke: $path"
+                                    exportMessage = "Exported to: $path"
                                 } else {
-                                    exportMessage = "Buka file untuk mengekspor"
+                                    exportMessage = "Open a file to export"
                                 }
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = DarkSurface, contentColor = TextPrimary),
@@ -291,7 +291,7 @@ fun MainScreen(viewModel: EditorViewModel) {
                     }
                 } else {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("Buka file dari menu", color = TextSecondary)
+                        Text("Open a file from the menu", color = TextSecondary)
                     }
                 }
             }
@@ -316,7 +316,7 @@ fun MainScreen(viewModel: EditorViewModel) {
             onDismissRequest = { showSettingsDialog = false },
             containerColor = DarkSurface,
             shape = RectangleShape,
-            title = { Text("Konfigurasi AI (OpenAI Compatible)", color = AccentRed, style = Typography.titleLarge) },
+            title = { Text("AI Configuration (OpenAI Compatible)", color = AccentRed, style = Typography.titleLarge) },
             text = {
                 Column {
                     OutlinedTextField(
@@ -348,7 +348,7 @@ fun MainScreen(viewModel: EditorViewModel) {
                     OutlinedTextField(
                         value = modelName,
                         onValueChange = { modelName = it },
-                        label = { Text("Nama Model", color = TextSecondary) },
+                        label = { Text("Model Name", color = TextSecondary) },
                         textStyle = Typography.bodyMedium.copy(color = TextPrimary),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = AccentRed,
@@ -371,7 +371,7 @@ fun MainScreen(viewModel: EditorViewModel) {
                     colors = ButtonDefaults.buttonColors(containerColor = AccentRed),
                     shape = RectangleShape
                 ) {
-                    Text("Simpan", color = DarkBackground)
+                    Text("Save", color = DarkBackground)
                 }
             },
             dismissButton = {
@@ -380,7 +380,7 @@ fun MainScreen(viewModel: EditorViewModel) {
                     colors = ButtonDefaults.buttonColors(containerColor = DarkBackground),
                     shape = RectangleShape
                 ) {
-                    Text("Batal", color = TextPrimary)
+                    Text("Cancel", color = TextPrimary)
                 }
             }
         )
@@ -391,7 +391,7 @@ fun MainScreen(viewModel: EditorViewModel) {
             onDismissRequest = { showCreatorInfo = false },
             containerColor = DarkSurface,
             shape = RectangleShape,
-            title = { Text("Informasi Pembuat", color = AccentRed, style = Typography.titleLarge) },
+            title = { Text("Creator Info", color = AccentRed, style = Typography.titleLarge) },
             text = {
                 Column {
                     Text("Zhaw (Shadiq)", color = TextPrimary, style = Typography.bodyLarge)
@@ -407,7 +407,7 @@ fun MainScreen(viewModel: EditorViewModel) {
                     colors = ButtonDefaults.buttonColors(containerColor = AccentRed),
                     shape = RectangleShape
                 ) {
-                    Text("Tutup", color = DarkBackground)
+                    Text("Close", color = DarkBackground)
                 }
             }
         )
@@ -418,7 +418,7 @@ fun MainScreen(viewModel: EditorViewModel) {
             onDismissRequest = { exportMessage = null },
             containerColor = DarkSurface,
             shape = RectangleShape,
-            title = { Text("Export Berhasil", color = AccentRed) },
+            title = { Text("Export Succeeded", color = AccentRed) },
             text = { Text(exportMessage ?: "", color = TextPrimary) },
             confirmButton = {
                 Button(
@@ -426,7 +426,7 @@ fun MainScreen(viewModel: EditorViewModel) {
                     colors = ButtonDefaults.buttonColors(containerColor = AccentRed),
                     shape = RectangleShape
                 ) {
-                    Text("Tutup", color = DarkBackground)
+                    Text("Close", color = DarkBackground)
                 }
             }
         )
@@ -438,7 +438,7 @@ fun MainScreen(viewModel: EditorViewModel) {
             onDismissRequest = { showNewFileDialog = false },
             containerColor = DarkSurface,
             shape = RectangleShape,
-            title = { Text(if (targetFolderForNew != null) "File di ${targetFolderForNew!!.name}" else "Buat File Baru", color = TextPrimary) },
+            title = { Text(if (targetFolderForNew != null) "File in ${targetFolderForNew!!.name}" else "Create New File", color = TextPrimary) },
             text = {
                 OutlinedTextField(
                     value = newFileName,
@@ -464,7 +464,7 @@ fun MainScreen(viewModel: EditorViewModel) {
                     colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple),
                     shape = RectangleShape
                 ) {
-                    Text("Buat", color = DarkBackground)
+                    Text("Create", color = DarkBackground)
                 }
             },
             dismissButton = {
@@ -473,7 +473,7 @@ fun MainScreen(viewModel: EditorViewModel) {
                     colors = ButtonDefaults.buttonColors(containerColor = DarkBackground),
                     shape = RectangleShape
                 ) {
-                    Text("Batal", color = TextPrimary)
+                    Text("Cancel", color = TextPrimary)
                 }
             }
         )
@@ -485,12 +485,12 @@ fun MainScreen(viewModel: EditorViewModel) {
             onDismissRequest = { showNewFolderDialog = false },
             containerColor = DarkSurface,
             shape = RectangleShape,
-            title = { Text(if (targetFolderForNew != null) "Folder di ${targetFolderForNew!!.name}" else "Buat Folder Baru", color = TextPrimary) },
+            title = { Text(if (targetFolderForNew != null) "Folder in ${targetFolderForNew!!.name}" else "Create New Folder", color = TextPrimary) },
             text = {
                 OutlinedTextField(
                     value = newFolderName,
                     onValueChange = { newFolderName = it },
-                    placeholder = { Text("Nama folder", color = TextSecondary) },
+                    placeholder = { Text("Folder name", color = TextSecondary) },
                     textStyle = Typography.bodyMedium.copy(color = TextPrimary),
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = SecondaryBronze,
@@ -511,7 +511,7 @@ fun MainScreen(viewModel: EditorViewModel) {
                     colors = ButtonDefaults.buttonColors(containerColor = SecondaryBronze),
                     shape = RectangleShape
                 ) {
-                    Text("Buat", color = DarkBackground)
+                    Text("Create", color = DarkBackground)
                 }
             },
             dismissButton = {
@@ -520,7 +520,7 @@ fun MainScreen(viewModel: EditorViewModel) {
                     colors = ButtonDefaults.buttonColors(containerColor = DarkBackground),
                     shape = RectangleShape
                 ) {
-                    Text("Batal", color = TextPrimary)
+                    Text("Cancel", color = TextPrimary)
                 }
             }
         )
