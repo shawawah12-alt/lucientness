@@ -56,9 +56,11 @@ jobs:
           "$SDKMANAGER" --list_installed | grep -E "(android-36|build-tools;36)" || true
 
       - name: Set up Gradle
+        # AGP 9.1.1 requires Gradle 9.3.1+ (enforced by
+        # com.android.internal.version-check plugin).
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.14.3'
+          gradle-version: '9.3.1'
 
       - name: Decode debug keystore
         run: |
