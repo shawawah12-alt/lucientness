@@ -66,7 +66,7 @@
 -dontwarn org.conscrypt.**
 -dontwarn org.bouncycastle.**
 -dontwarn org.openjsse.**
--keep names class okhttp3.internal.publicsuffix.PublicSuffixDatabase
+-keepnames class okhttp3.internal.publicsuffix.PublicSuffixDatabase
 -keep class okhttp3.** { *; }
 -keep class okio.** { *; }
 
