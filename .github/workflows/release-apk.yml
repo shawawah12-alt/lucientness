@@ -19,6 +19,10 @@ jobs:
     name: Build & Upload Release APK
     runs-on: ubuntu-latest
 
+    env:
+      # Disable Gradle daemon & enable configuration cache for CI.
+      GRADLE_OPTS: "-Dorg.gradle.daemon=false -Dorg.gradle.parallel=true -Dorg.gradle.caching=true"
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -30,39 +34,36 @@ jobs:
           java-version: '21'
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          packages: |
-            platforms;android-36
-            build-tools;36.0.0
+        # The project targets compileSdk 36 (with minor API level 1, the
+        # Android 16 QPR2 preview). The ubuntu-latest runner ships Android
+        # SDK 35 by default, so we install platform 36 + build-tools 36.0.0
+        # explicitly. Licenses are accepted non-interactively via `yes |`.
+        run: |
+          set -e
+          export ANDROID_HOME="${ANDROID_HOME:-/usr/local/lib/android/sdk}"
+          export ANDROID_SDK_ROOT="$ANDROID_HOME"
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKMANAGER" ]; then
+            SDKMANAGER="$ANDROID_HOME/cmdline-tools/16.0/bin/sdkmanager"
+          fi
+          echo "Using sdkmanager: $SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses > /dev/null 2>&1 || true
+          "$SDKMANAGER" --install \
+            "platforms;android-36" \
+            "build-tools;36.0.0" \
+            "platform-tools" > /dev/null
+          echo "Android SDK setup complete:"
+          "$SDKMANAGER" --list_installed | grep -E "(android-36|build-tools;36)" || true
 
       - name: Set up Gradle
-        # The repo does not ship a Gradle wrapper (AI Studio uses an internal
-        # Gradle install). Use the setup-gradle action which provisions a
-        # known-good Gradle distribution and generates the wrapper on the fly.
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.14.3'
 
       - name: Decode debug keystore
-        # The repo ships debug.keystore.base64 (the standard Android debug
-        # keystore). build.gradle.kts falls back to this file when no
-        # KEYSTORE_PATH env var is provided, which keeps release builds
-        # reproducible without requiring the user to manage a real upload
-        # keystore as a CI secret.
         run: |
           base64 -d debug.keystore.base64 > debug.keystore
-          test -s debug.keystore && echo "Keystore decoded OK"
-
-      - name: Cache Gradle
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/libs.versions.toml', '**/gradle.properties') }}
-          restore-keys: |
-            gradle-${{ runner.os }}-
+          test -s debug.keystore && echo "Keystore decoded OK ($(wc -c < debug.keystore) bytes)"
 
       - name: Assemble release APK
         # assembleRelease now succeeds because build.gradle.kts falls back to
@@ -76,6 +77,7 @@ jobs:
           set -e
           APK_PATH=$(find app/build/outputs/apk/release -name '*.apk' | head -1)
           echo "APK: $APK_PATH"
+          echo "Size: $(du -h "$APK_PATH" | cut -f1)"
           unzip -l "$APK_PATH" | tee /tmp/apk-contents.txt
           if grep -q "DebugProbesKt.bin" /tmp/apk-contents.txt; then
             echo "::error::DebugProbesKt.bin is present in the release APK — debugging overhead not stripped"
@@ -107,10 +109,31 @@ jobs:
           body: |
             ## What changed in ${{ steps.rename.outputs.version }}
 
-            - **Bug fix (sidebar gesture):** Swiping horizontally on the HTML preview no longer opens the left sidebar. The previous `pointerInput { detectTransformGestures { ... } }` on the WebView only consumed multi-touch transforms, leaving single-pointer drags to leak up to `ModalNavigationDrawer`'s edge-swipe detector. The fix removes that broken interceptor and disables `gesturesEnabled` on the drawer while preview mode is active, so the WebView owns its own touch stream again.
-            - **Debugging overhead removed:** v1.1.x shipped a debug APK (22 MB) containing `DebugProbesKt.bin` (kotlinx-coroutines-debug), Compose UI tooling, and the test manifest. This release is built via `assembleRelease` with `isMinifyEnabled = true`, `isShrinkResources = true`, and explicit `packaging.resources.excludes` that hard-strip `DebugProbesKt.bin` and other debug artifacts out of the final APK.
-            - **Release build now actually succeeds:** Previously `signingConfigs.release` pointed at `my-upload-key.jks` which was never committed, so any attempt at `assembleRelease` failed and the developer had to ship the debug APK instead. The build now falls back to the checked-in `debug.keystore` when no real upload keystore is configured via env vars, keeping the v1.1.x signing identity stable.
-            - **ProGuard rules:** Full keep rules for Moshi, Retrofit, OkHttp, Room, Compose, WebView, Firebase, and the app's own model classes so reflection-based code paths survive R8 minification.
+            ### Bug fix — sidebar gesture
+            Swiping horizontally on the HTML preview no longer opens the left sidebar. The previous `pointerInput { detectTransformGestures { ... } }` wrapper on the WebView only consumed multi-touch transforms (pinch/rotate), leaving single-pointer horizontal drags to leak up to `ModalNavigationDrawer`'s edge-swipe detector. The empty lambda also stole touch events from the WebView, which is why the HTML preview only moved a tiny bit when swiped.
+
+            Fix:
+            - Removed the broken `pointerInput` interceptor from `CodePreviewer.kt`.
+            - Set `gesturesEnabled = !isPreviewMode` on `ModalNavigationDrawer` in `MainScreen.kt`, so the drawer's edge-swipe detector is disabled while the preview is on screen. The hamburger button still opens the drawer normally.
+            - Enabled `loadWithOverviewMode`, `useWideViewPort`, and scrollbars on the WebView so the rendered HTML can be panned properly inside the preview pane.
+
+            ### Debugging overhead eliminated
+            v1.1.x shipped a **debug APK (22 MB)** containing `DebugProbesKt.bin` (kotlinx-coroutines-debug), Compose UI tooling, and the test manifest. This release is built via `assembleRelease` with:
+
+            - `isMinifyEnabled = true` (R8 code shrinking)
+            - `isShrinkResources = true` (resource shrinking)
+            - `isDebuggable = false` (explicit)
+            - `packaging.resources.excludes` that hard-strips `DebugProbesKt.bin` and other debug-only metadata out of the APK even if R8 misses them.
+            - Full ProGuard keep rules for Moshi, Retrofit, OkHttp, Room, Compose, WebView JS interface, Firebase, Coroutines, and the app's own model/network classes so reflection-based code paths survive R8 minification.
+
+            ### Release build now actually succeeds
+            Previously `signingConfigs.release` pointed at `my-upload-key.jks` which was never committed, so any attempt at `assembleRelease` failed and the developer had to ship the debug APK instead. The build now falls back to the checked-in `debug.keystore` when no real upload keystore is configured via env vars, keeping the v1.1.x signing identity stable.
+
+            ### Version bump
+            `versionCode` 1 → 2, `versionName` "1.0" → "1.2".
+
+            ### CI
+            Builds are now produced automatically by GitHub Actions on every `v*.*.*` tag push. The workflow asserts that `DebugProbesKt.bin` is not present in the final APK before publishing.
           generate_release_notes: true
           draft: false
           prerelease: false
