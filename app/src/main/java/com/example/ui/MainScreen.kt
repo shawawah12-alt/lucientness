@@ -146,7 +146,7 @@ fun MainScreen(viewModel: EditorViewModel) {
                         ) {
                             Icon(Icons.Default.Add, contentDescription = "File Baru")
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("File", softWrap = false)
+                            Text("File", maxLines = 1, style = Typography.bodySmall)
                         }
                         Spacer(modifier = Modifier.width(8.dp))
                         Button(
@@ -158,7 +158,7 @@ fun MainScreen(viewModel: EditorViewModel) {
                         ) {
                             Icon(Icons.Default.Add, contentDescription = "Folder Baru")
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Folder", softWrap = false)
+                            Text("Folder", maxLines = 1, style = Typography.bodySmall)
                         }
                     }
                     Spacer(modifier = Modifier.height(8.dp))
@@ -172,7 +172,7 @@ fun MainScreen(viewModel: EditorViewModel) {
                         ) {
                             Icon(Icons.Default.Add, contentDescription = "Import")
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Import", softWrap = false)
+                            Text("Import", maxLines = 1, style = Typography.bodySmall)
                         }
                         Spacer(modifier = Modifier.width(8.dp))
                         Button(
@@ -184,7 +184,7 @@ fun MainScreen(viewModel: EditorViewModel) {
                         ) {
                             Icon(Icons.Default.Add, contentDescription = "Export")
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("Export", softWrap = false)
+                            Text("Export", maxLines = 1, style = Typography.bodySmall)
                         }
                     }
                 }

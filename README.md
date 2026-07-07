@@ -1,8 +1,16 @@
 # Lucientness
 
-[!] Build: Passing | [!] License: MIT | [!] Version: 1.0.0
+![Build](https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge) ![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge) ![Version](https://img.shields.io/badge/version-1.0.0-orange?style=for-the-badge)
 
 Lucientness adalah aplikasi editor kode untuk Android yang dikembangkan dengan antarmuka bergaya dark fantasy. Aplikasi ini dirancang dengan pendekatan desain minimalis, kaku (boxy), dan menghindari elemen visual yang berlebihan. Tujuan utamanya adalah memberikan pengalaman menulis kode yang bersih, fokus, dan didukung oleh asisten kecerdasan buatan.
+
+## Daftar Isi
+- [Fitur Utama](#fitur-utama)
+- [Panduan Instalasi](#panduan-instalasi)
+- [Konfigurasi Asisten AI](#konfigurasi-asisten-ai)
+- [Berkontribusi](#berkontribusi)
+- [Lisensi](#lisensi)
+- [Informasi Pengembang](#informasi-pengembang)
 
 ## Fitur Utama
 
