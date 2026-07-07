@@ -81,10 +81,18 @@ fun MainScreen(viewModel: EditorViewModel) {
     val scope = rememberCoroutineScope()
     var showAiSheet by remember { mutableStateOf(false) }
     var showNewFileDialog by remember { mutableStateOf(false) }
+    var showNewFolderDialog by remember { mutableStateOf(false) }
     var showSettingsDialog by remember { mutableStateOf(false) }
     var showCreatorInfo by remember { mutableStateOf(false) }
-    var showNewFolderDialog by remember { mutableStateOf(false) }
+    var targetFolderForNew by remember { mutableStateOf<com.example.models.FileModel?>(null) }
+    var exportMessage by remember { mutableStateOf<String?>(null) }
     val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
+
+    val importLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let { viewModel.importFile(it) }
+    }
 
     ModalNavigationDrawer(
         drawerState = drawerState,
@@ -126,10 +134,21 @@ fun MainScreen(viewModel: EditorViewModel) {
                                     color = if (currentFile?.path == file.path) PrimaryPurple else TextPrimary,
                                     modifier = Modifier.weight(1f)
                                 )
-                                IconButton(onClick = { /* move */ }) {
-                                    Icon(Icons.Default.Add, contentDescription = "Pindah", tint = TextSecondary)
-                                }
-                                IconButton(onClick = { viewModel.deleteFile(file) }) {
+                                    if (file.isDirectory) {
+                                        IconButton(onClick = { 
+                                            targetFolderForNew = file
+                                            showNewFileDialog = true 
+                                        }) {
+                                            Icon(Icons.Default.Add, contentDescription = "Tambah File", tint = TextSecondary)
+                                        }
+                                        IconButton(onClick = { 
+                                            targetFolderForNew = file
+                                            showNewFolderDialog = true 
+                                        }) {
+                                            Icon(Icons.Default.CreateNewFolder, contentDescription = "Tambah Folder", tint = TextSecondary)
+                                        }
+                                    }
+                                    IconButton(onClick = { viewModel.deleteFile(file) }) {
                                     Icon(Icons.Default.Delete, contentDescription = "Hapus", tint = TextSecondary)
                                 }
                             }
@@ -138,7 +157,10 @@ fun MainScreen(viewModel: EditorViewModel) {
                     Spacer(modifier = Modifier.weight(1f))
                     Row(modifier = Modifier.fillMaxWidth()) {
                         Button(
-                            onClick = { showNewFileDialog = true },
+                            onClick = { 
+                                targetFolderForNew = null
+                                showNewFileDialog = true 
+                            },
                             colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple, contentColor = DarkBackground),
                             shape = RectangleShape,
                             modifier = Modifier.weight(1f),
@@ -150,7 +172,10 @@ fun MainScreen(viewModel: EditorViewModel) {
                         }
                         Spacer(modifier = Modifier.width(8.dp))
                         Button(
-                            onClick = { showNewFolderDialog = true },
+                            onClick = { 
+                                targetFolderForNew = null
+                                showNewFolderDialog = true 
+                            },
                             colors = ButtonDefaults.buttonColors(containerColor = SecondaryBronze, contentColor = DarkBackground),
                             shape = RectangleShape,
                             modifier = Modifier.weight(1f),
@@ -164,7 +189,7 @@ fun MainScreen(viewModel: EditorViewModel) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(modifier = Modifier.fillMaxWidth()) {
                         Button(
-                            onClick = { /* Implement import */ },
+                            onClick = { importLauncher.launch("*/*") },
                             colors = ButtonDefaults.buttonColors(containerColor = DarkSurface, contentColor = TextPrimary),
                             shape = RectangleShape,
                             modifier = Modifier.weight(1f),
@@ -176,7 +201,14 @@ fun MainScreen(viewModel: EditorViewModel) {
                         }
                         Spacer(modifier = Modifier.width(8.dp))
                         Button(
-                            onClick = { /* Implement export */ },
+                            onClick = { 
+                                val path = viewModel.exportCurrentFile()
+                                if (path != null) {
+                                    exportMessage = "Diekspor ke: $path"
+                                } else {
+                                    exportMessage = "Buka file untuk mengekspor"
+                                }
+                            },
                             colors = ButtonDefaults.buttonColors(containerColor = DarkSurface, contentColor = TextPrimary),
                             shape = RectangleShape,
                             modifier = Modifier.weight(1f),
@@ -376,13 +408,32 @@ fun MainScreen(viewModel: EditorViewModel) {
         )
     }
 
+    if (exportMessage != null) {
+        AlertDialog(
+            onDismissRequest = { exportMessage = null },
+            containerColor = DarkSurface,
+            shape = RectangleShape,
+            title = { Text("Export Berhasil", color = AccentRed) },
+            text = { Text(exportMessage ?: "", color = TextPrimary) },
+            confirmButton = {
+                Button(
+                    onClick = { exportMessage = null },
+                    colors = ButtonDefaults.buttonColors(containerColor = AccentRed),
+                    shape = RectangleShape
+                ) {
+                    Text("Tutup", color = DarkBackground)
+                }
+            }
+        )
+    }
+
     if (showNewFileDialog) {
         var newFileName by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { showNewFileDialog = false },
             containerColor = DarkSurface,
             shape = RectangleShape,
-            title = { Text("Buat File Baru", color = TextPrimary) },
+            title = { Text(if (targetFolderForNew != null) "File di ${targetFolderForNew!!.name}" else "Buat File Baru", color = TextPrimary) },
             text = {
                 OutlinedTextField(
                     value = newFileName,
@@ -400,9 +451,10 @@ fun MainScreen(viewModel: EditorViewModel) {
                 Button(
                     onClick = {
                         if (newFileName.isNotBlank()) {
-                            viewModel.createFile(newFileName)
+                            viewModel.createFile(newFileName, targetFolderForNew)
                         }
                         showNewFileDialog = false
+                        targetFolderForNew = null
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple),
                     shape = RectangleShape
@@ -428,7 +480,7 @@ fun MainScreen(viewModel: EditorViewModel) {
             onDismissRequest = { showNewFolderDialog = false },
             containerColor = DarkSurface,
             shape = RectangleShape,
-            title = { Text("Buat Folder Baru", color = TextPrimary) },
+            title = { Text(if (targetFolderForNew != null) "Folder di ${targetFolderForNew!!.name}" else "Buat Folder Baru", color = TextPrimary) },
             text = {
                 OutlinedTextField(
                     value = newFolderName,
@@ -446,9 +498,10 @@ fun MainScreen(viewModel: EditorViewModel) {
                 Button(
                     onClick = {
                         if (newFolderName.isNotBlank()) {
-                            viewModel.createFolder(newFolderName)
+                            viewModel.createFolder(newFolderName, targetFolderForNew)
                         }
                         showNewFolderDialog = false
+                        targetFolderForNew = null
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = SecondaryBronze),
                     shape = RectangleShape

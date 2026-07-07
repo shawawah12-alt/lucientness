@@ -62,8 +62,14 @@ object OpenAiClient {
                 val jsonStr = requestAdapter.toJson(requestBody)
                 val body = jsonStr.toRequestBody("application/json".toMediaType())
 
+                var url = settings.endpoint
+                if (!url.endsWith("/chat/completions")) {
+                    if (!url.endsWith("/")) url += "/"
+                    url += "chat/completions"
+                }
+
                 val request = Request.Builder()
-                    .url(settings.endpoint)
+                    .url(url)
                     .addHeader("Authorization", "Bearer ${settings.apiKey}")
                     .addHeader("Content-Type", "application/json")
                     .post(body)

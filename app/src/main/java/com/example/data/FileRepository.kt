@@ -73,4 +73,39 @@ class FileRepository(private val context: Context) {
             source.renameTo(File(destDir, source.name))
         }
     }
+
+    fun importFile(uri: android.net.Uri) {
+        try {
+            val cursor = context.contentResolver.query(uri, null, null, null, null)
+            val nameIndex = cursor?.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+            var fileName = "imported_file"
+            if (cursor != null && cursor.moveToFirst() && nameIndex != null && nameIndex >= 0) {
+                fileName = cursor.getString(nameIndex)
+            }
+            cursor?.close()
+
+            val inputStream = context.contentResolver.openInputStream(uri)
+            if (inputStream != null) {
+                val newFile = File(rootDir, fileName)
+                newFile.outputStream().use { output ->
+                    inputStream.copyTo(output)
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    fun exportFile(file: File): String? {
+        if (!file.exists() || file.isDirectory) return null
+        return try {
+            val downloadsDir = android.os.Environment.getExternalStoragePublicDirectory(android.os.Environment.DIRECTORY_DOWNLOADS)
+            val exportedFile = File(downloadsDir, file.name)
+            file.copyTo(exportedFile, overwrite = true)
+            exportedFile.absolutePath
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
 }

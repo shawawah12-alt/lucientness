@@ -89,6 +89,16 @@ class EditorViewModel(
         loadFiles()
     }
 
+    fun importFile(uri: android.net.Uri) {
+        repository.importFile(uri)
+        loadFiles()
+    }
+
+    fun exportCurrentFile(): String? {
+        val file = _currentFile.value?.file ?: return null
+        return repository.exportFile(file)
+    }
+
     fun togglePreview() {
         saveCurrentFile()
         _isPreviewMode.value = !_isPreviewMode.value
