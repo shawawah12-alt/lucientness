@@ -111,31 +111,37 @@ jobs:
           body: |
             ## What changed in ${{ steps.rename.outputs.version }}
 
-            ### Bug fix — sidebar gesture
-            Swiping horizontally on the HTML preview no longer opens the left sidebar. The previous `pointerInput { detectTransformGestures { ... } }` wrapper on the WebView only consumed multi-touch transforms (pinch/rotate), leaving single-pointer horizontal drags to leak up to `ModalNavigationDrawer`'s edge-swipe detector. The empty lambda also stole touch events from the WebView, which is why the HTML preview only moved a tiny bit when swiped.
+            ### AI responses now render as Markdown
+            Previously the AI assistant's responses showed raw Markdown syntax (`**bold**`, `***italic***`, backticks, etc.) instead of styled text. This release adds a custom Markdown renderer (`MarkdownText.kt`) that parses and styles:
 
-            Fix:
-            - Removed the broken `pointerInput` interceptor from `CodePreviewer.kt`.
-            - Set `gesturesEnabled = !isPreviewMode` on `ModalNavigationDrawer` in `MainScreen.kt`, so the drawer's edge-swipe detector is disabled while the preview is on screen. The hamburger button still opens the drawer normally.
-            - Enabled `loadWithOverviewMode`, `useWideViewPort`, and scrollbars on the WebView so the rendered HTML can be panned properly inside the preview pane.
+            - **bold**, *italic*, ~~strikethrough~~
+            - `inline code` with a tinted background
+            - Fenced code blocks (```...```) rendered as their own dark card with monospace font
+            - Headings (`#`, `##`, `###`)
+            - Links `[label](url)` styled in accent color
+            - Unordered lists (`-`, `*`, `+`) and ordered lists (`1.`, `2.`, ...)
+            - Blockquotes (`>`) with an accent-colored vertical bar
+            - Horizontal rules (`---`)
 
-            ### Debugging overhead eliminated
-            v1.1.x shipped a **debug APK (22 MB)** containing `DebugProbesKt.bin` (kotlinx-coroutines-debug), Compose UI tooling, and the test manifest. This release is built via `assembleRelease` with:
+            The renderer is a native Compose implementation (no extra dependency), so it inherits the app's dark-fantasy theme colors and stays compatible with R8 minification.
 
-            - `isMinifyEnabled = true` (R8 code shrinking)
-            - `isShrinkResources = true` (resource shrinking)
-            - `isDebuggable = false` (explicit)
-            - `packaging.resources.excludes` that hard-strips `DebugProbesKt.bin` and other debug-only metadata out of the APK even if R8 misses them.
-            - Full ProGuard keep rules for Moshi, Retrofit, OkHttp, Room, Compose, WebView JS interface, Firebase, Coroutines, and the app's own model/network classes so reflection-based code paths survive R8 minification.
+            ### AI responses can now be selected & copied
+            Long-press on the AI response now brings up the text selection handles so you can copy any portion of the answer (the raw Markdown source is what gets copied). Previously the response text was non-selectable.
 
-            ### Release build now actually succeeds
-            Previously `signingConfigs.release` pointed at `my-upload-key.jks` which was never committed, so any attempt at `assembleRelease` failed and the developer had to ship the debug APK instead. The build now falls back to the checked-in `debug.keystore` when no real upload keystore is configured via env vars, keeping the v1.1.x signing identity stable.
+            ### AI configuration dialog opens with empty fields
+            The Endpoint URL and Model Name fields no longer ship with the pre-filled `https://api.openai.com/v1/chat/completions` and `gpt-4` defaults — they now open blank so you can type your own values without first deleting the placeholders. The `isConfigured()` validation still requires all three fields to be non-blank before the assistant can be opened.
+
+            ### Bug fix — keyboard does not appear when tapping an empty file
+            On a freshly-created empty file, tapping the empty editor area did not bring up the soft keyboard — you had to tap and drag left first. Root cause: the `horizontalScroll` modifier on the wrapper `Box` intercepted taps before they reached the `BasicTextField`, so the field never got focus. Fix: moved `horizontalScroll` onto the `BasicTextField` itself, added a `FocusRequester` + `LocalSoftwareKeyboardController` to the editor, wrapped the editor row in a `clickable` that requests focus and shows the keyboard on any tap, and auto-focuses the field once on file open.
+
+            ### Bug fix — AI prompt input no longer hidden by the keyboard
+            When the AI response was long, the prompt input row could end up hidden behind the soft keyboard. The bottom sheet content now uses `Modifier.imePadding()` plus `navigationBarsPadding()` so the input row stays above the keyboard at all times.
 
             ### Version bump
-            `versionCode` 1 → 2, `versionName` "1.0" → "1.2".
+            `versionCode` 2 → 3, `versionName` "1.2" → "1.3".
 
             ### CI
-            Builds are now produced automatically by GitHub Actions on every `v*.*.*` tag push. The workflow asserts that `DebugProbesKt.bin` is not present in the final APK before publishing.
+            Builds are produced automatically by GitHub Actions on every `v*.*.*` tag push. The workflow asserts that `DebugProbesKt.bin` is not present in the final APK before publishing.
           generate_release_notes: true
           draft: false
           prerelease: false

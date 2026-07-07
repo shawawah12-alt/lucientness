@@ -1,19 +1,19 @@
 package com.example.ui.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -59,34 +59,45 @@ fun AiAssistantBottomSheet(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .imePadding()          // ← keeps the input row above the soft keyboard
+                .navigationBarsPadding()
                 .padding(16.dp)
         ) {
             Text("L U C I E N T   A I", style = Typography.titleLarge, color = AccentRed)
             Spacer(modifier = Modifier.height(16.dp))
-            
-            Column(
+
+            // The chat response area is scrollable and selectable.
+            // SelectionContainer lets the user long-press to select & copy
+            // any portion of the AI response (raw text — including the
+            // Markdown source — is what gets copied).
+            SelectionContainer(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f, fill = false)
                     .verticalScroll(scrollState)
             ) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = DarkSurface),
-                    shape = RectangleShape
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        if (isLoading) {
-                            Text("Thinking...", color = AccentRed, style = Typography.bodyMedium)
-                        } else {
-                            Text(aiResponse.ifEmpty { "Hi, is there anything I can help you with in this file's code?" }, color = TextPrimary, style = Typography.bodyMedium)
-                        }
-                    }
+                if (isLoading) {
+                    Text(
+                        "Thinking...",
+                        color = AccentRed,
+                        style = Typography.bodyMedium,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                } else {
+                    MarkdownText(
+                        markdown = aiResponse.ifEmpty {
+                            "Hi, is there anything I can help you with in this file's code?"
+                        },
+                        textColor = TextPrimary,
+                        codeBlockBackground = DarkSurface,
+                        codeBlockStroke = AccentRed,
+                        modifier = Modifier.padding(16.dp)
+                    )
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(16.dp))
-            
+
             Row(verticalAlignment = Alignment.CenterVertically) {
                 OutlinedTextField(
                     value = prompt,
