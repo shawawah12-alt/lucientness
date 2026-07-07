@@ -1,0 +1,6 @@
+{
+  "name": "Lucientness",
+  "description": "A dark fantasy, sleek, anti-rounded code editor inspired by Spck Editor, featuring multi-language support, live preview, and an advanced AI coding assistant.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
